@@ -27,7 +27,15 @@ else:
     print("API-Aufruf fehlgeschlagen: Statuscode {}".format(response.status_code))
 
 # Erstellen einer Funktion um den Display zu aktualisieren
+# speichern Sie die vorherigen Werte der Textfelder
+previous_erzeugung = None
+previous_verbrauch = None
+previous_bezug = None
+previous_batterie_leistung = None
+previous_betriebs_modus_text = None
+
 def update_display():
+    global previous_erzeugung, previous_verbrauch, previous_bezug, previous_batterie_leistung, previous_betriebs_modus_text
 
     r = requests.get(base_url)
     events_date = r.json()
@@ -44,27 +52,16 @@ def update_display():
     }
 
     betriebs_modus_text = modus_mapping.get(betriebs_modus, "Unbekannter Modus ({})".format(betriebs_modus))
-    print("Erzeugung:  \n {} Watt".format(erzeugung))
-    print("Netz Bezug:  \n {} Watt".format(verbrauch))
-    print("Aktueller Verbrauch:  \n {} Watt".format(bezug))
-    print("Batterie Ladestand: \n {}%".format(batterie_leistung))
-    print("Betriebsmodus:  \n  {}".format(betriebs_modus_text))
-    
-
     # Setze die endpunkt URL für das Pixoo Display
     pix = Pixoo(local_ip_pixoo.Local_ip, 64, True)
-
-    # Zeige aktuelle Uhrzeit und gebe sie im deutschen Format aus
     now = time.localtime()
-    print(time.strftime('%H:%M:%S', now))
 
-    pix.push()
     # Setze den Hintergrund auf schwarz    
     pix.fill((0, 0, 0))
     # Setze das Hintergrundbild
     pix.draw_image('images/sonne.png')
     
-    # Schreibe die Texte auf dem Display
+    # Zeichne alle Texte neu
     pix.draw_text('Sonnen', (3,  3), (  0,   255, 0))
     pix.draw_text('Batterie', (3,  9), (255,    255,    0))
     pix.draw_text(time.strftime('%d.%m %H:%M', now), (3,  28), (252,253,254))
@@ -73,12 +70,21 @@ def update_display():
     pix.draw_text(str(bezug) + ' kW Verbr', (3,  46), (0,0,255))
     pix.draw_text(str(batterie_leistung) + ' % Ladung', (3,  52), (252,253,254))
     pix.draw_text(str(betriebs_modus_text), (3,  58), (252,253,254))
-    # Zeige die Texte auf dem Display
+
+    # Speichern Sie die aktuellen Werte der Textfelder
+    previous_erzeugung = erzeugung
+    previous_verbrauch = verbrauch
+    previous_bezug = bezug
+    previous_batterie_leistung = batterie_leistung
+    previous_betriebs_modus_text = betriebs_modus_text
+
+    # Zeigen Sie alle Texte auf dem Display an
     pix.push()
-    # Schreibe die Laufschrift auf dem Display 
-    #pix.send_text( '    Jede Stunde wird der Preis angepasst                    ' , (0, 32), (  0,   255, 0), 1, 0, 46,  75)
-    # wiederholen alle 60 Sekunden die Funktion
+
+    # wiederholen alle 10 Sekunden die Funktion
     time.sleep(10)
     # Starte die Funktion erneut
     update_display()
+
+
 update_display()
